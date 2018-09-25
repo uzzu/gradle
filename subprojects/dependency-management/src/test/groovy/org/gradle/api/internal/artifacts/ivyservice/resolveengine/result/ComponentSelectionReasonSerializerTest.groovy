@@ -27,22 +27,22 @@ class ComponentSelectionReasonSerializerTest extends SerializerSpec {
 
     def "serializes"() {
         expect:
-        check(VersionSelectionReasons.CONFLICT_RESOLUTION)
-        check(VersionSelectionReasons.FORCED)
-        check(VersionSelectionReasons.REQUESTED)
-        check(VersionSelectionReasons.ROOT)
-        check(VersionSelectionReasons.SELECTED_BY_RULE)
-        check(VersionSelectionReasons.REQUESTED, VersionSelectionReasons.SELECTED_BY_RULE)
+        check(ComponentSelectionReasons.CONFLICT_RESOLUTION)
+        check(ComponentSelectionReasons.FORCED)
+        check(ComponentSelectionReasons.REQUESTED)
+        check(ComponentSelectionReasons.ROOT)
+        check(ComponentSelectionReasons.SELECTED_BY_RULE)
+        check(ComponentSelectionReasons.REQUESTED, ComponentSelectionReasons.SELECTED_BY_RULE)
     }
 
     def "serializes custom reasons"() {
         expect:
-        check(VersionSelectionReasons.CONFLICT_RESOLUTION.withReason(Describables.of("my conflict resolution")))
-        check(VersionSelectionReasons.FORCED.withReason(Describables.of("forced by me")))
-        check(VersionSelectionReasons.REQUESTED.withReason(Describables.of("I really asked for it")))
-        check(VersionSelectionReasons.ROOT.withReason(Describables.of("I know this is the root of the graph")))
-        check(VersionSelectionReasons.SELECTED_BY_RULE.withReason(Describables.of("Wouldn't it be nice to add custom reasons?")))
-        check(VersionSelectionReasons.REQUESTED, VersionSelectionReasons.SELECTED_BY_RULE.withReason(Describables.of("More details!")))
+        check(ComponentSelectionReasons.CONFLICT_RESOLUTION.withReason(Describables.of("my conflict resolution")))
+        check(ComponentSelectionReasons.FORCED.withReason(Describables.of("forced by me")))
+        check(ComponentSelectionReasons.REQUESTED.withReason(Describables.of("I really asked for it")))
+        check(ComponentSelectionReasons.ROOT.withReason(Describables.of("I know this is the root of the graph")))
+        check(ComponentSelectionReasons.SELECTED_BY_RULE.withReason(Describables.of("Wouldn't it be nice to add custom reasons?")))
+        check(ComponentSelectionReasons.REQUESTED, ComponentSelectionReasons.SELECTED_BY_RULE.withReason(Describables.of("More details!")))
     }
 
     def "multiple writes of the same custom reason"() {
@@ -67,13 +67,13 @@ class ComponentSelectionReasonSerializerTest extends SerializerSpec {
     }
 
     void check(ComponentSelectionDescriptor... reasons) {
-        def reason = VersionSelectionReasons.of(Arrays.asList(reasons))
+        def reason = ComponentSelectionReasons.of(Arrays.asList(reasons))
         def result = serialize(reason, serializer)
         assert result == reason
     }
 
     private static ComponentSelectionReasonInternal withReason(String reason) {
-        VersionSelectionReasons.of([VersionSelectionReasons.SELECTED_BY_RULE.withReason(Describables.of(reason))])
+        ComponentSelectionReasons.of([ComponentSelectionReasons.SELECTED_BY_RULE.withReason(Describables.of(reason))])
     }
 
     @Override
