@@ -25,6 +25,7 @@ class LargeDependencyGraphPerformanceTest extends AbstractCrossVersionPerformanc
     private final static TEST_PROJECT_NAME = 'excludeRuleMergingBuild'
     public static final String MIN_MEMORY = "-Xms800m"
     public static final String MAX_MEMORY = "-Xmx800m"
+    public static final long FORCE_RERUN = 1
 
     def setup() {
         runner.minimumVersion = '4.6'
