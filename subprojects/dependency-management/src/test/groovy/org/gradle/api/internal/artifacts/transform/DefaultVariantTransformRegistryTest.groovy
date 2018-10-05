@@ -48,6 +48,7 @@ class DefaultVariantTransformRegistryTest extends Specification {
     def isolatableFactory = Mock(IsolatableFactory)
     def classLoaderHierarchyHasher = Mock(ClassLoaderHierarchyHasher)
     def attributesFactory = TestUtil.attributesFactory()
+    def artifactTransformListener = Mock(ArtifactTransformListener)
     def registry = new DefaultVariantTransformRegistry(instantiatorFactory, attributesFactory, transformedFileCache, isolatableFactory, classLoaderHierarchyHasher, artifactTransformListener)
 
     def "creates registration without configuration"() {

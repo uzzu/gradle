@@ -34,13 +34,11 @@ public class ConsumerProvidedResolvedVariant implements ResolvedArtifactSet {
     private final ResolvedArtifactSet delegate;
     private final AttributeContainerInternal attributes;
     private final ArtifactTransformation transform;
-    private final ArtifactTransformListener transformListener;
 
-    public ConsumerProvidedResolvedVariant(ResolvedArtifactSet delegate, AttributeContainerInternal target, ArtifactTransformation transform, ArtifactTransformListener transformListener) {
+    public ConsumerProvidedResolvedVariant(ResolvedArtifactSet delegate, AttributeContainerInternal target, ArtifactTransformation transform) {
         this.delegate = delegate;
         this.attributes = target;
         this.transform = transform;
-        this.transformListener = transformListener;
     }
 
     @Override

@@ -31,7 +31,7 @@ class ArtifactTransformationStep implements ArtifactTransformation {
     private final TransformerRegistration transformerRegistration;
     private final ArtifactTransformListener artifactTransformListener;
 
-    public ArtifactTransformationStep(DefaultTransformerRegistration transformerRegistration, TransformedFileCache transformedFileCache, ArtifactTransformListener artifactTransformListener) {
+    public ArtifactTransformationStep(TransformerRegistration transformerRegistration, TransformedFileCache transformedFileCache, ArtifactTransformListener artifactTransformListener) {
         this.transformerRegistration = transformerRegistration;
         this.transformedFileCache = transformedFileCache;
         this.artifactTransformListener = artifactTransformListener;
@@ -60,9 +60,10 @@ class ArtifactTransformationStep implements ArtifactTransformation {
                 result.addAll(transformedFileCache.runTransformer(file, transformerRegistration));
             } catch (Throwable t) {
                 return new DefaultTransformationSubject(subjectToTransform, t);
-            }
-            if (!hasCachedResult) {
-                artifactTransformListener.afterTransform(transformerRegistration, subjectToTransform);
+            } finally {
+                if (!hasCachedResult) {
+                    artifactTransformListener.afterTransform(transformerRegistration, subjectToTransform);
+                }
             }
         }
         return new DefaultTransformationSubject(subjectToTransform, result);
