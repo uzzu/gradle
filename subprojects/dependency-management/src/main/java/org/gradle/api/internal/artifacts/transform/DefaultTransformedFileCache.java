@@ -18,7 +18,6 @@ package org.gradle.api.internal.artifacts.transform;
 
 import com.google.common.collect.ImmutableList;
 import org.gradle.api.Action;
-import org.gradle.api.artifacts.transform.TransformInvocationException;
 import org.gradle.api.internal.artifacts.ivyservice.ArtifactCacheMetadata;
 import org.gradle.api.internal.changedetection.state.InMemoryCacheDecoratorFactory;
 import org.gradle.cache.CacheBuilder;
@@ -122,16 +121,12 @@ public class DefaultTransformedFileCache implements TransformedFileCache, Stoppa
     @Override
     public List<File> runTransformer(File primaryInput, Transformer transformer) {
         File absolutePrimaryInput = primaryInput.getAbsoluteFile();
-        try {
-            CacheKey cacheKey = getCacheKey(absolutePrimaryInput, transformer);
-            List<File> transformedFiles = resultHashToResult.get(cacheKey);
-            if (transformedFiles != null) {
-                return transformedFiles;
-            }
-            return loadIntoCache(absolutePrimaryInput, cacheKey, transformer);
-        } catch (Throwable t) {
-            throw new TransformInvocationException(absolutePrimaryInput, transformer.getImplementationClass(), t);
+        CacheKey cacheKey = getCacheKey(absolutePrimaryInput, transformer);
+        List<File> transformedFiles = resultHashToResult.get(cacheKey);
+        if (transformedFiles != null) {
+            return transformedFiles;
         }
+        return loadIntoCache(absolutePrimaryInput, cacheKey, transformer);
     }
 
     /*

@@ -17,6 +17,7 @@
 package org.gradle.api.internal.artifacts.transform;
 
 import com.google.common.collect.ImmutableList;
+import org.gradle.api.artifacts.transform.TransformInvocationException;
 
 import java.io.File;
 
@@ -42,7 +43,7 @@ public class DefaultTransformerInvoker implements TransformerInvoker {
             ImmutableList<File> result = ImmutableList.copyOf(transformedFileCache.runTransformer(primaryInput, transformer));
             invocation.success(result);
         } catch (Throwable t) {
-            invocation.failure(t);
+            invocation.failure(new TransformInvocationException(primaryInput.getAbsoluteFile(), transformer.getImplementationClass(), t));
         } finally {
             if (!hasCachedResult) {
                 artifactTransformListener.afterTransform(transformer, subjectBeingTransformed);

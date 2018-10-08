@@ -343,7 +343,7 @@ class DefaultTransformedFileCacheTest extends ConcurrentSpec {
 
         then:
         def e = thrown(RuntimeException)
-        e.cause.is(failure)
+        e.is(failure)
 
         and:
         1 * transform.inputsHash >> HashCode.fromInt(123)
