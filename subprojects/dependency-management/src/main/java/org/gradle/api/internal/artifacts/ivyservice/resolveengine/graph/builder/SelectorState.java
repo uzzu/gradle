@@ -21,7 +21,6 @@ import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.ModuleIdentifier;
 import org.gradle.api.artifacts.component.ComponentSelector;
 import org.gradle.api.artifacts.component.ModuleComponentSelector;
-import org.gradle.api.artifacts.result.ComponentSelectionCause;
 import org.gradle.api.internal.artifacts.ResolvedVersionConstraint;
 import org.gradle.api.internal.artifacts.dependencies.DefaultResolvedVersionConstraint;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector;
@@ -32,9 +31,7 @@ import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.Compone
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionReasonInternal;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionReasons;
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
-import org.gradle.internal.Describables;
 import org.gradle.internal.component.model.DependencyMetadata;
-import org.gradle.internal.component.model.ForcingDependencyMetadata;
 import org.gradle.internal.component.model.LocalOriginDependencyMetadata;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
 import org.gradle.internal.resolve.resolver.DependencyToComponentIdResolver;
@@ -44,9 +41,6 @@ import org.gradle.internal.resolve.result.DefaultBuildableComponentIdResolveResu
 
 import java.util.Set;
 
-import static org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionReasons.CONSTRAINT;
-import static org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionReasons.REQUESTED;
-
 /**
  * Resolution state for a given module version selector.
  *
@@ -54,7 +48,7 @@ import static org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.
  * 1. The selector has been newly added to a `ModuleResolveState`. In this case {@link #resolved} will be `false`.
  * 2. The selector failed to resolve. In this case {@link #failure} will be `!= null`.
  * 3. The selector was part of resolution to a particular module version.
- * In this case {@link #resolved} will be `true` and {@link ModuleResolveState#selected} will point to the selected component.
+ * In this case {@link #resolved} will be `true` and {@link ModuleResolveState#getSelected()} will point to the selected component.
  */
 class SelectorState implements DependencyGraphSelector, ResolvableSelectorState {
     private static final Transformer<ComponentSelectionDescriptorInternal, ComponentSelectionDescriptorInternal> IDENTITY = new Transformer<ComponentSelectionDescriptorInternal, ComponentSelectionDescriptorInternal>() {
@@ -90,16 +84,15 @@ class SelectorState implements DependencyGraphSelector, ResolvableSelectorState 
 
     SelectorState(Long id, DependencyState dependencyState, DependencyToComponentIdResolver resolver, VersionSelectorScheme versionSelectorScheme, ResolveState resolveState, ModuleIdentifier targetModuleId) {
         this.id = id;
-        this.dependencyState = dependencyState;
-        this.firstSeenDependency = dependencyState.getDependency();
         this.resolver = resolver;
         this.versionSelectorScheme = versionSelectorScheme;
         this.targetModule = resolveState.getModule(targetModuleId);
-        this.versionConstraint = resolveVersionConstraint(firstSeenDependency.getSelector());
         this.attributesFactory = resolveState.getAttributesFactory();
-        this.forced = isForced(dependencyState);
-        this.fromLock = isFromLock(firstSeenDependency);
-        addDependencyMetadata(firstSeenDependency);
+
+        update(dependencyState);
+        this.dependencyState = dependencyState;
+        this.firstSeenDependency = dependencyState.getDependency();
+        this.versionConstraint = resolveVersionConstraint(firstSeenDependency.getSelector());
     }
 
     public void use() {
@@ -120,15 +113,6 @@ class SelectorState implements DependencyGraphSelector, ResolvableSelectorState 
     private void removeAndMarkSelectorForReuse() {
         targetModule.removeSelector(this);
         resolved = false;
-    }
-
-    private void addDependencyMetadata(DependencyMetadata dependencyMetadata) {
-        String reason = dependencyMetadata.getReason();
-        ComponentSelectionDescriptorInternal dependencyDescriptor = dependencyMetadata.isConstraint() ? CONSTRAINT : REQUESTED;
-        if (reason != null) {
-            dependencyDescriptor = dependencyDescriptor.withReason(Describables.of(reason));
-        }
-        dependencyReasons.add(dependencyDescriptor);
     }
 
     private DefaultResolvedVersionConstraint resolveVersionConstraint(ComponentSelector selector) {
@@ -302,15 +286,6 @@ class SelectorState implements DependencyGraphSelector, ResolvableSelectorState 
         return AttributeDesugaring.desugarSelector(selector, attributesFactory);
     }
 
-    private static boolean isForced(DependencyState dependencyState) {
-        if (dependencyState.getRuleDescriptor() != null && dependencyState.getRuleDescriptor().getCause() == ComponentSelectionCause.FORCED) {
-            return true;
-        }
-        DependencyMetadata dependencyMetadata = dependencyState.getDependency();
-        return dependencyMetadata instanceof ForcingDependencyMetadata
-            && ((ForcingDependencyMetadata) dependencyMetadata).isForce();
-    }
-
     private static boolean isFromLock(DependencyMetadata dependencyMetadata) {
         return dependencyMetadata instanceof LocalOriginDependencyMetadata
             && ((LocalOriginDependencyMetadata) dependencyMetadata).isFromLock();
@@ -318,16 +293,15 @@ class SelectorState implements DependencyGraphSelector, ResolvableSelectorState 
 
     public void update(DependencyState dependencyState) {
         if (dependencyState != this.dependencyState) {
-            DependencyMetadata dependency = dependencyState.getDependency();
-            if (!forced && isForced(dependencyState)) {
+            if (!forced && dependencyState.isForced()) {
                 forced = true;
                 resolved = false; // when a selector changes from non forced to forced, we must reselect
             }
-            if (!fromLock && isFromLock(dependency)) {
+            if (!fromLock && dependencyState.isFromLock()) {
                 fromLock = true;
                 resolved = false; // when a selector changes from non lock to lock, we must reselect
             }
-            addDependencyMetadata(dependency);
+            dependencyState.addSelectionReasons(dependencyReasons);
         }
     }
 }

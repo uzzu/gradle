@@ -17,10 +17,19 @@ package org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.builder
 
 import org.gradle.api.artifacts.ModuleIdentifier;
 import org.gradle.api.artifacts.component.ComponentSelector;
+import org.gradle.api.artifacts.result.ComponentSelectionCause;
 import org.gradle.api.internal.artifacts.ComponentSelectorConverter;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionDescriptorInternal;
+import org.gradle.internal.Describables;
 import org.gradle.internal.component.model.DependencyMetadata;
+import org.gradle.internal.component.model.ForcingDependencyMetadata;
+import org.gradle.internal.component.model.LocalOriginDependencyMetadata;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
+
+import java.util.Set;
+
+import static org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionReasons.CONSTRAINT;
+import static org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ComponentSelectionReasons.REQUESTED;
 
 class DependencyState {
     private final ComponentSelector requested;
@@ -68,4 +77,26 @@ class DependencyState {
     public ComponentSelectionDescriptorInternal getRuleDescriptor() {
         return ruleDescriptor;
     }
+
+    public boolean isForced() {
+        if (getRuleDescriptor() != null && getRuleDescriptor().getCause() == ComponentSelectionCause.FORCED) {
+            return true;
+        }
+        return dependency instanceof ForcingDependencyMetadata && ((ForcingDependencyMetadata) dependency).isForce();
+    }
+
+    public boolean isFromLock() {
+        return dependency instanceof LocalOriginDependencyMetadata && ((LocalOriginDependencyMetadata) dependency).isFromLock();
+    }
+
+    public void addSelectionReasons(Set<ComponentSelectionDescriptorInternal> reasons) {
+        String reason = dependency.getReason();
+        ComponentSelectionDescriptorInternal dependencyDescriptor = dependency.isConstraint() ? CONSTRAINT : REQUESTED;
+        if (reason != null) {
+            dependencyDescriptor = dependencyDescriptor.withReason(Describables.of(reason));
+        }
+        reasons.add(dependencyDescriptor);
+
+    }
+
 }
