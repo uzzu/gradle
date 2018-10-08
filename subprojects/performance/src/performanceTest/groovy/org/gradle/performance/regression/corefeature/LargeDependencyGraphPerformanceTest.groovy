@@ -74,7 +74,7 @@ class LargeDependencyGraphPerformanceTest extends AbstractCrossVersionPerformanc
 
     def dummyMethod() {
         // Change this to force the performance tests to rerun
-        int forceRerun = 7
+        int forceRerun = 8
         return forceRerun
     }
 
