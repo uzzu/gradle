@@ -46,6 +46,7 @@ class CachedKotlinTaskExecutionIntegrationTest extends AbstractPluginIntegration
                 }
             }
         """
+        executer.withGlobalRepositoryMirrors()
     }
 
     @IgnoreIf({GradleContextualExecuter.parallel})
