@@ -16,7 +16,11 @@
 
 package org.gradle.internal.snapshot.impl
 
+import org.gradle.api.Action
+import org.gradle.api.file.FileTree
+import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.internal.cache.StringInterner
+import org.gradle.api.internal.file.FileTreeInternal
 import org.gradle.api.internal.file.TestFiles
 import org.gradle.api.internal.file.collections.DirectoryFileTree
 import org.gradle.internal.file.FileType
@@ -30,6 +34,7 @@ import org.gradle.internal.snapshot.WellKnownFileLocations
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.junit.Rule
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class DefaultFileSystemSnapshotterTest extends Specification {
     @Rule TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
@@ -241,6 +246,62 @@ class DefaultFileSystemSnapshotterTest extends Specification {
                 throw new UnsupportedOperationException()
             }
         })
+    }
+
+    @Unroll
+    def "snapshots #description of #input"() {
+        given:
+        tmpDir.createFile("file")
+        tmpDir.createDir("emptyDir")
+        tmpDir.file("missing")
+        def dir = tmpDir.createDir("dir")
+        dir.file("file-in-dir").createFile()
+        def dirInDir = dir.file("dir-in-dir")
+        dirInDir.createDir()
+        dirInDir.createFile("file-in-dir-in-dir")
+        def fileOperations = TestFiles.fileOperations(tmpDir.getTestDirectory())
+        def inputFile = tmpDir.file(input)
+        def tree = fromCollection ? fileOperations.immutableFiles(inputFile).asFileTree : fileOperations.fileTree(inputFile)
+
+        expect:
+        snapshotAndWalkerIsConsistent(tree)
+
+        where:
+        input      | fromCollection
+        "file"     | false
+        "file"     | true
+        "dir"      | false
+        "dir"      | true
+        "emptyDir" | false
+        "emptyDir" | true
+        "missing"  | false
+        "missing"  | true
+        description = fromCollection ? "tree from file collection" : "fileTree"
+    }
+
+    private void snapshotAndWalkerIsConsistent(FileTree fileTree) {
+        def snapshottedFiles = [:]
+        snapshotter.snapshot((FileTreeInternal) fileTree).find()?.accept(new RelativePathTrackingVisitor() {
+            @Override
+            void visit(String absolutePath, Deque<String> relativePath) {
+                if (relativePath.size() == 1) {
+                    if (new File(absolutePath).isFile()) {
+                        snapshottedFiles.put(absolutePath, relativePath.join("/"))
+                    }
+                } else {
+                    snapshottedFiles.put(absolutePath, relativePath.tail().join('/'))
+                }
+            }
+        })
+        def walkedFiles = [:]
+        fileTree.visit(new Action<FileVisitDetails>() {
+            @Override
+            void execute(FileVisitDetails fileVisitDetails) {
+                walkedFiles.put(fileVisitDetails.file.absolutePath, fileVisitDetails.path)
+            }
+        })
+
+        assert snapshottedFiles == walkedFiles
     }
 
     private static DirectoryFileTree dirTree(File dir) {

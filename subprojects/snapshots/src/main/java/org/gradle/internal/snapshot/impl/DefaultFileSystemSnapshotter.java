@@ -208,12 +208,12 @@ public class DefaultFileSystemSnapshotter implements FileSystemSnapshotter {
         tree.visitTreeOrBackingFile(new FileVisitor() {
             @Override
             public void visitDir(FileVisitDetails dirDetails) {
-                builder.addDir(dirDetails.getFile(), dirDetails.getRelativePath().getSegments());
+                builder.addDir(dirDetails.getFile(), dirDetails.getRelativePath().getParent().getSegments());
             }
 
             @Override
             public void visitFile(FileVisitDetails fileDetails) {
-                builder.addFile(fileDetails.getFile(), fileDetails.getRelativePath().getSegments(), regularFileSnapshot(fileDetails));
+                builder.addFile(fileDetails.getFile(), fileDetails.getRelativePath().getParent().getSegments(), regularFileSnapshot(fileDetails));
             }
 
             private RegularFileSnapshot regularFileSnapshot(FileVisitDetails fileDetails) {
