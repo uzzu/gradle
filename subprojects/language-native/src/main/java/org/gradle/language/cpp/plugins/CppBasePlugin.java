@@ -16,16 +16,12 @@
 
 package org.gradle.language.cpp.plugins;
 
-import com.google.common.io.Files;
-import org.apache.commons.io.IOUtils;
 import org.gradle.api.Action;
 import org.gradle.api.Incubating;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
-import org.gradle.api.UncheckedIOException;
-import org.gradle.api.artifacts.transform.ArtifactTransform;
 import org.gradle.api.artifacts.transform.VariantTransform;
 import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.attributes.Usage;
@@ -42,6 +38,7 @@ import org.gradle.language.cpp.CppSharedLibrary;
 import org.gradle.language.cpp.ProductionCppComponent;
 import org.gradle.language.cpp.internal.DefaultCppBinary;
 import org.gradle.language.cpp.internal.DefaultCppComponent;
+import org.gradle.language.cpp.internal.UnzipToDirectory;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.internal.Names;
 import org.gradle.language.plugins.NativeBasePlugin;
@@ -54,16 +51,9 @@ import org.gradle.nativeplatform.toolchain.internal.plugins.StandardToolChainsPl
 import org.gradle.swiftpm.internal.SwiftPmTarget;
 
 import javax.inject.Inject;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static org.gradle.api.internal.FeaturePreviews.Feature.GRADLE_METADATA;
 
@@ -171,40 +161,5 @@ public class CppBasePlugin implements Plugin<ProjectInternal> {
                 });
             }
         });
-    }
-
-    static class UnzipToDirectory extends ArtifactTransform {
-        @Override
-        public List<File> transform(File headersZip) {
-            try {
-                unzipTo(headersZip);
-            } catch (IOException e) {
-                throw new UncheckedIOException("extracting header zip", e);
-            }
-            return Collections.singletonList(getOutputDirectory());
-        }
-
-        // TODO: Find a better reusable unzip infrastructure
-        private void unzipTo(File headersZip) throws IOException {
-            ZipInputStream inputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(headersZip)));
-            try {
-                ZipEntry entry;
-                while ((entry = inputStream.getNextEntry()) != null) {
-                    if (entry.isDirectory()) {
-                        continue;
-                    }
-                    File outFile = new File(getOutputDirectory(), entry.getName());
-                    Files.createParentDirs(outFile);
-                    FileOutputStream outputStream = new FileOutputStream(outFile);
-                    try {
-                        IOUtils.copyLarge(inputStream, outputStream);
-                    } finally {
-                        outputStream.close();
-                    }
-                }
-            } finally {
-                inputStream.close();
-            }
-        }
     }
 }

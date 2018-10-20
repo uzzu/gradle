@@ -43,6 +43,7 @@ import org.gradle.language.swift.SwiftBinary;
 import org.gradle.language.swift.SwiftPlatform;
 import org.gradle.language.swift.SwiftVersion;
 import org.gradle.language.swift.tasks.SwiftCompile;
+import org.gradle.nativeplatform.HeaderFormat;
 import org.gradle.nativeplatform.OperatingSystemFamily;
 import org.gradle.nativeplatform.internal.modulemap.ModuleMap;
 import org.gradle.nativeplatform.toolchain.internal.NativeToolChainInternal;
@@ -92,6 +93,7 @@ public class DefaultSwiftBinary extends DefaultNativeBinary implements SwiftBina
         importPathConfiguration.getAttributes().attribute(DEBUGGABLE_ATTRIBUTE, identity.isDebuggable());
         importPathConfiguration.getAttributes().attribute(OPTIMIZED_ATTRIBUTE, identity.isOptimized());
         importPathConfiguration.getAttributes().attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, identity.getOperatingSystemFamily());
+        importPathConfiguration.getAttributes().attribute(HeaderFormat.ATTRIBUTE, objectFactory.named(HeaderFormat.class, HeaderFormat.DIRECTORY));
 
         Configuration nativeLink = configurations.create(names.withPrefix("nativeLink"));
         nativeLink.extendsFrom(getImplementationDependencies());
