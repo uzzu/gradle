@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import org.gradle.api.DomainObjectSet;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.component.ComponentWithVariants;
 import org.gradle.api.component.SoftwareComponent;
@@ -50,7 +51,9 @@ public class MainLibraryVariant implements ComponentWithVariants, SoftwareCompon
 
     @Override
     public Set<? extends UsageContext> getUsages() {
-        return ImmutableSet.of(new DefaultUsageContext(name, usage, artifacts, dependencies));
+        // TODO: HACK, this should be a variant too?
+        AttributeContainer attributes = dependencies.getOutgoing().getVariants().getByName("zipped").getAttributes();
+        return ImmutableSet.of(new DefaultUsageContext(name, usage, attributes, artifacts, dependencies));
     }
 
     @Override

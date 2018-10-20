@@ -52,7 +52,7 @@ public class DefaultUsageContext implements UsageContext, Named {
         this(name, usage, attributes, null, null);
     }
 
-    private DefaultUsageContext(String name, Usage usage, AttributeContainer attributes, Set<? extends PublishArtifact> artifacts, Configuration configuration) {
+    public DefaultUsageContext(String name, Usage usage, AttributeContainer attributes, Set<? extends PublishArtifact> artifacts, Configuration configuration) {
         this.name = name;
         this.usage = usage;
         this.attributes = attributes;
